@@ -17,22 +17,22 @@ baseDir = "D:\\pracadyplomowa\\projektPhotoblog\\src\\"
 months = ["STY", "LUT", "MAR", "KWI", "MAJ", "CZE", "LIP", "SIE", "WRZ", "PAź", "LIS", "GRU"]
 months2 = ["STYCZNIA", "LUTEGO", "MARCA", "KWIETNIA", "MAJA", "CZERWCA", "LIPCA", "SIERPNIA", "WRZEśNIA",
            "PAźDZIERNIKA", "LISTOPADA", "GRUDNIA"]
-path_active = "D:\\pracadyplomowa\\projektPhotoblog\\src\\active3_5.csv"
-path_history = "D:\\pracadyplomowa\\projektPhotoblog\\src\\history.csv"
-path_userdump = "D:\\pracadyplomowa\\projektPhotoblog\\dmp\\userdump.csv"
-tmp_postdump = "D:\\pracadyplomowa\\projektPhotoblog\\dmp\\tmp.csv"
-path_postdump = "D:\\pracadyplomowa\\projektPhotoblog\\dmp\\" + URL_userName + ".csv"
+path_active = "enterPathHere.csv"
+path_history = "enterPathHere.csv"
+path_userdump = "enterPathHere.csv"
+tmp_postdump = "enterPathHere.csv"
+path_postdump = "enterPathHere.csv" + URL_userName + ".csv"
 fullURL = URL_base + "/" + URL_userName + "/" + URL_postNumber
 isok = 1
 isLast = False
-downloadDirectory = "D:\\pracadyplomowa\\projektPhotoblog\\dmp"
+downloadDirectory = "enterPathHere"
 count = 0
 log = []
 
 
 ############## FUNCTIONS ##############
 
-# Checks if the connection is working
+# Checks if the connection is working fine
 def statusCheck(fullURL):
     try:
         response = requests.get(fullURL)
@@ -50,7 +50,7 @@ def statusCheck(fullURL):
 
 # TEST = OK
 
-# get the image link (hits the performance a lot - not used at this stage for downloading photos per se)
+# get the image link (hits the performance a lot - not used at this stage for downloading photos per se, though it's used for other functions)
 def getPhoto(soup):
     try:
         photoLink = soup.find("meta", property="og:image")
@@ -63,7 +63,7 @@ def getPhoto(soup):
 # TEST = OK
 
 # Fetches the date, when needed parses it.
-# Date format is YYYY_MM_DD
+# Date format by default is YYYY_MM_DD
 def getDate(soup):
     try:
         dateRAW = [item.get_text(strip=True) for item in soup.select("span.now_date")]
@@ -105,9 +105,8 @@ def getDate(soup):
             except:
                 date = "n/a"
             return date
-
-
 # TEST = OK
+
 # Support function for parsing the month at newer date formats.
 def monthCheck(dateSep):
     if dateSep in months2:
@@ -170,8 +169,6 @@ def monthCheck(dateSep):
         except:
             month = "00"
             return month
-
-
 # TEST = OK
 
 # Gets post title (for earliest post will be empty or fixed as "Photoblog <username> w Photoblog.pl")
@@ -179,10 +176,10 @@ def getTitle(soup):
     titleRAW = soup.find("meta", property="og:title")
     title = titleRAW.get("content", None)
     return title
-
-
 # TEST = OK
 
+
+# Gets full note content. Parses it and removes all non alphanumeric characters excluding dot (".").
 def getNote(soup):
     try:
         noteRAW = soup.find("div", id="photo_note").contents
@@ -205,8 +202,6 @@ def getNote(soup):
         note = "Unable to fetch the note, unknown source format"
         print(note)
         return note
-
-
 # TEST = OK
 
 # Fetches the next page of the user content.
@@ -219,8 +214,6 @@ def getNextPage(soup):
         nextPageRAW = soup.find("a", {"class": "prev"}, href=True, )
         nextPage = nextPageRAW.get("href")
         return nextPage
-
-
 # TEST = OK
 
 # Checks ig the post is the last one
@@ -250,18 +243,15 @@ def checkIfLast(soup, isFirst):
             else:
                 isLast = False
             return isLast
-
-
 # TEST = OK
 
 # Fetches the number of post
 def getPostnumber(soup):
     postNumber = getPhoto(soup).split("/")[5].split(".")[0]
     return postNumber
-
-
 # TEST = OK
 
+# Gets the name if the user
 def getUserName(soup):
     try:
         name = soup.find("div", id="user_details").contents[1]
@@ -272,9 +262,8 @@ def getUserName(soup):
         except:
             name = "n/a"
     return name
-
-
 # TEST = OK
+
 
 # Fetches the age of the user
 def getUserAge(soup, profilename):
@@ -297,9 +286,7 @@ def getUserAge(soup, profilename):
         except:
             age = "n/a"
     return age
-
-
-# TEST = OK
+# TEST = OK - it is however faulty basing on HTML parsing by beautifulsoup
 
 # Fetches the user's city
 def getUserCity(soup):
@@ -313,10 +300,9 @@ def getUserCity(soup):
         except:
             city = "n/a"
     return city
+# TEST = OK - it is however faulty basing on HTML parsing by beautifulsoup
 
-
-# TEST = OK
-
+# Download the soup. For somplification of the endcode.
 def getSoup(URL_base, URL_userName, _URL_postNumber):
     fullURL = URL_base + "/" + URL_userName + "/" + URL_postNumber
     if statusCheck(fullURL):
@@ -326,21 +312,26 @@ def getSoup(URL_base, URL_userName, _URL_postNumber):
         print("process terminated")
         quit()
     return soup
+# TEST = OK
 
-
+# Gets all the date to a nice cool and fancy CSV format.
 def getLine(soup, row):
     line = row[0] + ", " + getPostnumber(soup) + ", " + getDate(soup) + ", " + getTitle(
         soup) + ", " + getNote(soup) + ", " + str(datetime.datetime.utcnow()) + "\n"
     return line
+# TEST = OK
 
-
+# Gets the list of already scrapped uesrs
 def getAlreadyScrapped():
     alreadyScrapped = []
     alreadyScrapped_tmp = os.listdir("D:\\pracadyplomowa\\projektPhotoblog\\dmp")
     for item in alreadyScrapped_tmp:
         alreadyScrapped.append(item.split(".")[0])
     return alreadyScrapped
+# TEST = OK
 
+
+# Check if the user is still active in the service
 def checkIfExpired(soup):
     possibility = ["nie istnieje w serwisie Photoblog.pl", "nie dodał jeszcze żadnego wpisu"]
     try:
@@ -354,7 +345,10 @@ def checkIfExpired(soup):
         isexpired = False
 
     return isexpired
+# TEST = OK
 
+
+# Checks if the blog is password protected
 def checkIfPasswordProtected(soup):
     try:
         psswd = soup.find("div", {"class": "show_midoptions_w"}).contents[1]
@@ -367,12 +361,13 @@ def checkIfPasswordProtected(soup):
     except:
         isProtected = False
     return isProtected
+# TEST = OK
 
 ############## CORE ##############
 
 print("################# INIT INFO #################")
 print('SCRAPPING COMMENCES!')
-# I'LL ADD SOME STATS HERE to make it look nice :)
+# I'LL ADD SOME STATS HERE to make it look nice :) Later... much later...
 
 print("################# DIR CHECK #################")
 # CREATE LOCATIONS IF NOT EXISTENT
@@ -416,6 +411,7 @@ with open(path_active, newline='', encoding='utf-8') as f:
                 tmp.append(row[0] + ", n/a, n/a, n/a, " + str(datetime.datetime.utcnow()) + "\n")
             URL_postNumber = ""
             with open("D:\\pracadyplomowa\\projektPhotoblog\\dmp\\" + URL_userName + ".csv", "w", encoding="utf-8") as postdump:
+                      # to be fixed - but as long as it works...
                 for a in tmp:
                     postdump.write(a)
                     count += 1
@@ -426,7 +422,7 @@ with open(path_active, newline='', encoding='utf-8') as f:
             log.append(str(datetime.datetime.now()) + ", " + row[0] + ", " + "user_end_time : " +
                        str(datetime.datetime.now()) + "\n")
             log.append(str(count) + ", " + "lines written in : " + str(duration) + "\n")
-            with open("D:\\pracadyplomowa\\projektPhotoblog\\log\\script3.csv", "a", encoding="utf-8") as logfile:
+            with open("enterpathforlog.csv", "a", encoding="utf-8") as logfile:
                for x in log:
                    logfile.write(x)
             logfile.close()
